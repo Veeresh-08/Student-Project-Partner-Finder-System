@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CollabSphere | Project Management</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #ec4899;
+            --dark-bg: #0f172a;
+            --dark-card: #1e293b;
+            --light-bg: #f8fafc;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--light-bg);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* LOGIN */
+        .login {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+
+        .login-box {
+            width: 400px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .login-logo {
+            font-size: 3rem;
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            width: 250px;
+            height: 100vh;
+            background: #111827;
+            padding: 20px 15px;
+            color: white;
+            transition: 0.3s;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+
+        .sidebar h4 {
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .sidebar button {
+            width: 100%;
+            margin: 8px 0;
+            text-align: left;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .sidebar button i { width: 25px; }
+        .sidebar button:hover { transform: translateX(5px); }
+
+        /* MAIN */
+        .main {
+            margin-left: 250px;
+            padding: 30px;
+            transition: 0.3s;
+        }
+
+        /* CARD */
+        .card-box {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            margin-top: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            transition: 0.3s;
+            position: relative;
+        }
+
+        .card-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .badge-custom {
+            background: var(--primary);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* KANBAN BOARD */
+        .kanban-col {
+            background: rgba(0,0,0,0.03);
+            border-radius: 10px;
+            padding: 15px;
+            min-height: 400px;
+        }
+        .dark .kanban-col { background: rgba(255,255,255,0.05); }
+
+        /* TOAST */
+        .toast-msg {
+            position: fixed;
+            top: 20px;
+            right: -400px;
+            background: #111827;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: right 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast-msg.show { right: 20px; }
+        .toast-msg.success { background: #10b981; }
+        .toast-msg.error { background: #ef4444; }
+        .toast-msg.warning { background: #f59e0b; }
+
+        /* AVATAR */
+        .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #e2e8f0;
+        }
+
+        /* DARK MODE */
+        .dark { background: var(--dark-bg); color: #f1f5f9; }
+        .dark .card-box { background: var(--dark-card); border-color: #334155; color: white; }
+        .dark .sidebar { background: #020617; }
+        .dark input, .dark select, .dark textarea { background: #334155; color: white; border: 1px solid #475569; }
+        .dark input:focus, .dark select:focus { background: #475569; color: white; }
+        .dark .modal-content { background: var(--dark-card); color: white; }
+        .dark .close { color: white; }
+
+        /* MOBILE */
+        @media(max-width: 768px) {
+            .sidebar { width: 100%; height: auto; position: relative; display: flex; flex-wrap: wrap; padding: 10px; }
+            .sidebar h4, .sidebar hr { width: 100%; }
+            .sidebar button { width: calc(50% - 10px); margin: 5px; }
+            .main { margin-left: 0; padding: 15px; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="toast" class="toast-msg"></div>
+
+    <div id="loginPage" class="login">
+        
+        <div class="login-box" id="loginBox">
+            <div class="login-logo"><i class="fa-solid fa-layer-group"></i></div>
+            <h3 class="text-center font-weight-bold">CollabSphere</h3>
+            <p class="text-center text-muted mb-4">Project Management Nexus</p>
+
+            <div class="form-group">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+                    </div>
+                    <input id="username" class="form-control" placeholder="Username">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                    </div>
+                    <input id="password" type="password" class="form-control" placeholder="Password">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <select id="role" class="form-control">
+                    <option value="user">Student / User</option>
+                    <option value="admin">Administrator</option>
+                </select>
+            </div>
+
+            <div class="text-right mb-3">
+                <a href="#" class="small font-weight-bold text-primary" onclick="toggleAuthView('forgotBox')">Forgot Password?</a>
+            </div>
+
+            <button class="btn btn-primary btn-block py-2 font-weight-bold" onclick="login()">
+                Secure Login <i class="fa-solid fa-arrow-right ml-2"></i>
+            </button>
+            <hr>
+            <small class="d-block text-center text-muted">New users are registered automatically on first login.</small>
+        </div>
+
+        <div class="login-box" id="forgotBox" style="display: none;">
+            <div class="login-logo"><i class="fa-solid fa-shield-halved"></i></div>
+            <h4 class="text-center font-weight-bold">Account Recovery</h4>
+            <p class="text-center text-muted mb-4">Enter your username to reset</p>
+
+            <div class="form-group">
+                <input id="forgotUsername" class="form-control" placeholder="Enter Username">
+            </div>
+
+            <button class="btn btn-warning btn-block py-2 font-weight-bold text-dark" onclick="verifyUsername()">
+                Verify Account
+            </button>
+            <button class="btn btn-light btn-block py-2 mt-2" onclick="toggleAuthView('loginBox')">Back to Login</button>
+        </div>
+
+        <div class="login-box" id="resetBox" style="display: none;">
+            <div class="login-logo"><i class="fa-solid fa-key"></i></div>
+            <h4 class="text-center font-weight-bold">New Password</h4>
+            <p class="text-center text-muted mb-4">Create a new secure password</p>
+
+            <div class="form-group">
+                <input id="newPassword" type="password" class="form-control mb-3" placeholder="New Password">
+                <input id="confirmPassword" type="password" class="form-control" placeholder="Confirm Password">
+            </div>
+
+            <button class="btn btn-success btn-block py-2 font-weight-bold" onclick="saveNewPassword()">
+                Update Password
+            </button>
+            <button class="btn btn-light btn-block py-2 mt-2" onclick="toggleAuthView('loginBox')">Cancel</button>
+        </div>
+
+    </div>
+
+    <div id="app" style="display:none;">
+
+        <div class="sidebar">
+            <h4 class="text-center"><i class="fa-solid fa-layer-group mr-2"></i>CollabSphere</h4>
+            <hr style="background:rgba(255,255,255,0.2);">
+
+            <button class="btn btn-light text-dark" onclick="show('dash')"><i class="fa-solid fa-chart-pie"></i> Dashboard</button>
+            <button id="btnStudents" class="btn btn-info text-white" onclick="show('students')"><i class="fa-solid fa-users"></i> Students</button>
+            <button id="btnProjects" class="btn btn-primary" onclick="show('projects')"><i class="fa-solid fa-folder-open"></i> Projects</button>
+            <button class="btn btn-warning text-dark" onclick="show('requests')"><i class="fa-solid fa-bell"></i> Requests</button>
+            <button class="btn btn-secondary text-white" onclick="show('kanban')"><i class="fa-solid fa-bars-staggered"></i> Task Board</button>
+            <button class="btn btn-success" onclick="show('history')"><i class="fa-solid fa-clock-rotate-left"></i> History</button>
+            <button class="btn btn-dark border border-secondary mt-2" onclick="show('profile')"><i class="fa-solid fa-id-badge"></i> Profile</button>
+            <hr style="background:rgba(255,255,255,0.2);">
+            <button class="btn btn-dark border border-secondary" onclick="toggleDark()"><i class="fa-solid fa-moon"></i> Toggle Theme</button>
+            <button id="btnReset" class="btn btn-outline-danger" onclick="resetDatabase()"><i class="fa-solid fa-database"></i> Reset Data</button>
+            <button class="btn btn-danger mt-2" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </div>
+
+        <div class="main">
+
+            <div id="dash">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 id="welcome" class="font-weight-bold m-0"></h3>
+                    <span id="dateDisplay" class="text-muted font-weight-bold"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card-box text-center">
+                            <i class="fa-solid fa-users fa-2x text-info mb-2"></i>
+                            <h5 class="text-muted">Total Students</h5>
+                            <h1 id="c1" class="font-weight-bold">0</h1>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card-box text-center">
+                            <i class="fa-solid fa-folder fa-2x text-primary mb-2"></i>
+                            <h5 class="text-muted">Active Projects</h5>
+                            <h1 id="c2" class="font-weight-bold">0</h1>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card-box text-center">
+                            <i class="fa-solid fa-envelope-open-text fa-2x text-warning mb-2"></i>
+                            <h5 class="text-muted">Total Requests</h5>
+                            <h1 id="c3" class="font-weight-bold">0</h1>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-8">
+                        <div class="card-box">
+                            <canvas id="barChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card-box d-flex align-items-center justify-content-center" style="height: 100%;">
+                            <canvas id="doughnutChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="students" style="display:none;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="m-0"><i class="fa-solid fa-users mr-2"></i>Student Directory</h4>
+                    <button class="btn btn-info" onclick="openStudentModal()"><i class="fa-solid fa-plus"></i> Add Student</button>
+                </div>
+
+                <input id="searchStudent" class="form-control border-0 shadow-sm mb-4 py-4 px-4" style="border-radius:30px;" placeholder="🔍 Search students by name..." onkeyup="render()">
+                
+                <div class="row" id="slist"></div>
+            </div>
+
+            <div id="projects" style="display:none;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="m-0"><i class="fa-solid fa-folder-open mr-2"></i>Project Repository</h4>
+                    <button id="addProjBtn" class="btn btn-primary" onclick="openProjectModal()"><i class="fa-solid fa-plus"></i> Create Project</button>
+                </div>
+                
+                <div id="userProjectsMsg" class="alert alert-info" style="display:none;">
+                    <i class="fa-solid fa-circle-info mr-2"></i>Browse and review all available projects below.
+                </div>
+
+                <input id="searchProject" class="form-control border-0 shadow-sm mb-4 py-4 px-4" style="border-radius:30px;" placeholder="🔍 Search projects by title..." onkeyup="render()">
+
+                <div class="row" id="plist"></div>
+            </div>
+
+            <div id="requests" style="display:none;">
+                <h4 class="mb-4"><i class="fa-solid fa-bell mr-2"></i>Action Center & Requests</h4>
+                <div class="row" id="rlist"></div>
+            </div>
+
+            <div id="kanban" style="display:none;">
+                <h4 class="mb-4"><i class="fa-solid fa-bars-staggered mr-2"></i>Project Task Board</h4>
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="text-center text-muted font-weight-bold mb-3"><i class="fa-solid fa-circle text-secondary"></i> Started</h6>
+                        <div class="kanban-col" id="kb-started"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-center text-primary font-weight-bold mb-3"><i class="fa-solid fa-spinner"></i> In Process</h6>
+                        <div class="kanban-col" id="kb-process"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-center text-success font-weight-bold mb-3"><i class="fa-solid fa-check-double"></i> Completed (Pending Archive)</h6>
+                        <div class="kanban-col" id="kb-completed"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="history" style="display:none;">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="m-0"><i class="fa-solid fa-clock-rotate-left mr-2"></i>Completed Projects</h4>
+                    <button class="btn btn-success" onclick="exportCSV()"><i class="fa-solid fa-file-csv mr-2"></i>Export CSV</button>
+                </div>
+                <div class="row" id="historyList"></div>
+            </div>
+
+            <div id="profile" style="display:none;">
+                <h4 class="mb-4"><i class="fa-solid fa-id-badge mr-2"></i>User Profile</h4>
+                <div class="card-box text-center mx-auto" style="max-width: 500px; padding: 40px;">
+                    <img id="profileImage" src="" class="avatar mb-3" style="width:120px; height:120px; border-width: 5px;">
+                    <h3 class="font-weight-bold" id="profileName"></h3>
+                    <span class="badge-custom bg-secondary d-inline-block mb-3" id="profileRole"></span>
+                    <hr>
+                    <p class="text-muted">Account Status: <span class="text-success font-weight-bold"><i class="fa-solid fa-circle-check"></i> Active</span></p>
+                    <p class="text-muted">Member Since: <span class="font-weight-bold" id="profileDate"></span></p>
+                </div>
+            </div>
+
+            <footer class="text-center p-4 mt-5 text-muted">
+                CollabSphere Nexus © 2026 | Built for Excellence
+            </footer>
+
+        </div>
+    </div>
+
+    <div class="modal fade" id="studentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="studentModalTitle"><i class="fa-solid fa-user-plus mr-2"></i>Register Student</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="studentEditIndex" value="-1">
+                    <input id="sn" class="form-control mb-3" placeholder="Full Name">
+                    <input id="sd" class="form-control mb-3" placeholder="Department (e.g. Computer Science)">
+                    <input id="ss" class="form-control mb-3" placeholder="Core Skills (e.g. React, Node.js)">
+                    <button class="btn btn-info btn-block" onclick="saveStudent()" id="studentSaveBtn">Save Student</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="projectModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="projectModalTitle"><i class="fa-solid fa-folder-plus mr-2"></i>New Project</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="projectEditIndex" value="-1">
+                    <input id="pt" class="form-control mb-3" placeholder="Project Title">
+                    <textarea id="pd" class="form-control mb-3" rows="3" placeholder="Project Description"></textarea>
+                    <input id="ps" class="form-control mb-3" placeholder="Required Skills">
+                    <button class="btn btn-primary btn-block" onclick="saveProject()" id="projectSaveBtn">Publish Project</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* GLOBAL VARIABLES */
+        let students = JSON.parse(localStorage.getItem("students")) || [];
+        let projects = JSON.parse(localStorage.getItem("projects")) || [];
+        let completedProjects = JSON.parse(localStorage.getItem("completedProjects")) || [];
+        let requests = JSON.parse(localStorage.getItem("requests")) || [];
+        
+        let usersDB = JSON.parse(localStorage.getItem("usersDB")) || { "admin": "admin123" };
+        let recoveringUser = ""; 
+
+        let user = "";
+        let role = "";
+        let barChartObj = null;
+        let donutChartObj = null;
+
+        document.getElementById("dateDisplay").innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        /* TOAST */
+        function toast(msg, type = "success") {
+            const t = document.getElementById("toast");
+            let icon = '<i class="fa-solid fa-circle-check"></i>';
+            if (type === "error") icon = '<i class="fa-solid fa-circle-xmark"></i>';
+            if (type === "warning") icon = '<i class="fa-solid fa-triangle-exclamation"></i>';
+
+            t.innerHTML = `${icon} ${msg}`;
+            t.className = "toast-msg show " + type;
+
+            setTimeout(() => { t.classList.remove("show"); }, 3000);
+        }
+
+        /* AUTHENTICATION & LOGIN */
+        function toggleAuthView(viewId) {
+            document.getElementById("loginBox").style.display = "none";
+            document.getElementById("forgotBox").style.display = "none";
+            document.getElementById("resetBox").style.display = "none";
+            document.getElementById(viewId).style.display = "block";
+            
+            // Clear fields on toggle
+            document.getElementById("password").value = "";
+            document.getElementById("forgotUsername").value = "";
+            document.getElementById("newPassword").value = "";
+            document.getElementById("confirmPassword").value = "";
+        }
+
+        function login() {
+            try {
+                const username = document.getElementById("username").value.trim();
+                const password = document.getElementById("password").value.trim();
+                role = document.getElementById("role").value;
+
+                if (username === "" || password === "") {
+                    toast("Credentials required.", "warning"); return;
+                }
+
+                if (role === "admin") {
+                    if (username !== "admin" || password !== usersDB["admin"]) {
+                        toast("Invalid Admin Credentials.", "error"); return;
+                    }
+                } else {
+                    if (!usersDB[username]) {
+                        usersDB[username] = password;
+                        localStorage.setItem("usersDB", JSON.stringify(usersDB));
+                        toast("New account registered!", "success");
+                    } else if (usersDB[username] !== password) {
+                        toast("Incorrect password.", "error"); return;
+                    }
+                }
+
+                user = username;
+                document.getElementById("loginPage").style.display = "none";
+                document.getElementById("app").style.display = "block";
+
+                document.getElementById("welcome").innerHTML = `Hello, <span class="text-primary">${user}</span>!`;
+                document.getElementById("profileName").innerText = user;
+                document.getElementById("profileRole").innerText = role.toUpperCase();
+                document.getElementById("profileDate").innerText = new Date().toLocaleDateString();
+                document.getElementById("profileImage").src = `https://ui-avatars.com/api/?name=${user}&background=random&color=fff&size=150`;
+
+                if (role === "user") {
+                    document.getElementById("btnStudents").style.display = "none";
+                    document.getElementById("addProjBtn").style.display = "none";
+                    document.getElementById("btnReset").style.display = "none";
+                    document.getElementById("userProjectsMsg").style.display = "block";
+                } else {
+                    document.getElementById("btnStudents").style.display = "block";
+                    document.getElementById("addProjBtn").style.display = "inline-block";
+                    document.getElementById("btnReset").style.display = "block";
+                    document.getElementById("userProjectsMsg").style.display = "none";
+                }
+
+                show("dash");
+                render();
+                toast("Authentication Successful.", "success");
+
+            } catch (err) { console.log(err); toast("System Error during login.", "error"); }
+        }
+
+        /* FORGOT / RESET PASSWORD LOGIC */
+        function verifyUsername() {
+            const checkUser = document.getElementById("forgotUsername").value.trim();
+            if (checkUser === "") {
+                toast("Please enter a username.", "warning"); return;
+            }
+            
+            if (!usersDB[checkUser]) {
+                toast("Account not found.", "error"); return;
+            }
+
+            recoveringUser = checkUser;
+            toast("Account verified.", "success");
+            toggleAuthView("resetBox");
+        }
+
+        function saveNewPassword() {
+            const p1 = document.getElementById("newPassword").value;
+            const p2 = document.getElementById("confirmPassword").value;
+
+            if (p1 === "" || p2 === "") {
+                toast("Both fields are required.", "warning"); return;
+            }
+            if (p1 !== p2) {
+                toast("Passwords do not match.", "error"); return;
+            }
+
+            usersDB[recoveringUser] = p1;
+            localStorage.setItem("usersDB", JSON.stringify(usersDB));
+            
+            toast("Password reset successful! Please log in.", "success");
+            toggleAuthView("loginBox");
+        }
+
+        /* NAVIGATION */
+        function show(id) {
+            ["dash", "students", "projects", "requests", "kanban", "history", "profile"].forEach(x => {
+                document.getElementById(x).style.display = "none";
+            });
+            document.getElementById(id).style.display = "block";
+            if(id === 'dash') renderCharts();
+        }
+
+        /* LOGOUT & RESET */
+        function logout() { location.reload(); }
+        
+        function resetDatabase() {
+            if(confirm("DANGER: This will erase all students, projects, and history permanently. Continue?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        /* DARK MODE */
+        function toggleDark() {
+            document.body.classList.toggle("dark");
+            renderCharts(); 
+        }
+
+        /* STUDENT LOGIC (CRUD) */
+        function openStudentModal(index = -1) {
+            document.getElementById("studentEditIndex").value = index;
+            if (index > -1) {
+                document.getElementById("studentModalTitle").innerHTML = `<i class="fa-solid fa-user-pen mr-2"></i>Edit Student`;
+                document.getElementById("studentSaveBtn").innerText = "Update Student";
+                document.getElementById("sn").value = students[index].name;
+                document.getElementById("sd").value = students[index].dept;
+                document.getElementById("ss").value = students[index].skill;
+            } else {
+                document.getElementById("studentModalTitle").innerHTML = `<i class="fa-solid fa-user-plus mr-2"></i>Register Student`;
+                document.getElementById("studentSaveBtn").innerText = "Save Student";
+                document.getElementById("sn").value = "";
+                document.getElementById("sd").value = "";
+                document.getElementById("ss").value = "";
+            }
+            $('#studentModal').modal('show');
+        }
+
+        function saveStudent() {
+            let snVal = document.getElementById("sn").value;
+            let sdVal = document.getElementById("sd").value;
+            let ssVal = document.getElementById("ss").value;
+            let idx = parseInt(document.getElementById("studentEditIndex").value);
+
+            if (snVal === "" || sdVal === "" || ssVal === "") {
+                toast("All fields are mandatory.", "warning"); return;
+            }
+
+            if (idx > -1) {
+                students[idx] = { name: snVal, dept: sdVal, skill: ssVal };
+                toast("Student updated successfully.");
+            } else {
+                students.push({ name: snVal, dept: sdVal, skill: ssVal });
+                toast("Student registered successfully.");
+            }
+
+            localStorage.setItem("students", JSON.stringify(students));
+            $('#studentModal').modal('hide');
+            render();
+        }
+
+        function delStudent(i) {
+            if(confirm("Are you sure you want to remove this student?")) {
+                students.splice(i, 1);
+                localStorage.setItem("students", JSON.stringify(students));
+                toast("Student record removed.");
+                render();
+            }
+        }
+
+        /* PROJECT LOGIC (CRUD) */
+        function openProjectModal(index = -1) {
+            document.getElementById("projectEditIndex").value = index;
+            if (index > -1) {
+                document.getElementById("projectModalTitle").innerHTML = `<i class="fa-solid fa-pen-to-square mr-2"></i>Edit Project`;
+                document.getElementById("projectSaveBtn").innerText = "Update Project";
+                document.getElementById("pt").value = projects[index].title;
+                document.getElementById("pd").value = projects[index].desc;
+                document.getElementById("ps").value = projects[index].skill;
+            } else {
+                document.getElementById("projectModalTitle").innerHTML = `<i class="fa-solid fa-folder-plus mr-2"></i>New Project`;
+                document.getElementById("projectSaveBtn").innerText = "Publish Project";
+                document.getElementById("pt").value = "";
+                document.getElementById("pd").value = "";
+                document.getElementById("ps").value = "";
+            }
+            $('#projectModal').modal('show');
+        }
+
+        function saveProject() {
+            let ptVal = document.getElementById("pt").value;
+            let pdVal = document.getElementById("pd").value;
+            let psVal = document.getElementById("ps").value;
+            let idx = parseInt(document.getElementById("projectEditIndex").value);
+
+            if (ptVal === "" || pdVal === "" || psVal === "") {
+                toast("All fields are mandatory.", "warning"); return;
+            }
+
+            if (idx > -1) {
+                projects[idx].title = ptVal;
+                projects[idx].desc = pdVal;
+                projects[idx].skill = psVal;
+                toast("Project updated successfully.");
+            } else {
+                projects.push({ title: ptVal, desc: pdVal, skill: psVal, status: "Pending" });
+                toast("Project published successfully.");
+            }
+
+            localStorage.setItem("projects", JSON.stringify(projects));
+            $('#projectModal').modal('hide');
+            render();
+        }
+
+        function changeProjectAvailability(i, status) {
+            projects[i].status = status;
+            if (status === "Completed") {
+                completedProjects.push({
+                    project: projects[i].title, student: "General Pool / Unassigned",
+                    message: "Marked Complete by Admin.", completedDate: new Date().toLocaleDateString()
+                });
+                projects.splice(i, 1);
+                localStorage.setItem("completedProjects", JSON.stringify(completedProjects));
+            }
+            localStorage.setItem("projects", JSON.stringify(projects));
+            toast("Project lifecycle updated.", "success");
+            render();
+        }
+
+        /* REQUEST & KANBAN LOGIC */
+        function sendRequest(name) {
+            let projectName = prompt(`Enter Project Name you want to assign/request for ${name}:`);
+            if (!projectName || projectName.trim() === "") { toast("Project Name is required.", "warning"); return; }
+            let msg = prompt("Attach a message or instructions:");
+            if (!msg || msg.trim() === "") { toast("Message is required.", "warning"); return; }
+
+            requests.push({
+                from: user, to: name, project: projectName, message: msg,
+                status: "pending", projectStatus: "Started", completedMessage: ""
+            });
+            localStorage.setItem("requests", JSON.stringify(requests));
+            toast(`Request routed to ${name}.`, "success");
+            render();
+        }
+
+        function accept(i) { updateRequestStatus(i, "accepted"); }
+        function reject(i) { updateRequestStatus(i, "rejected"); }
+
+        function updateRequestStatus(origIdx, newStatus) {
+            requests[origIdx].status = newStatus;
+            localStorage.setItem("requests", JSON.stringify(requests));
+            toast(`Request ${newStatus}.`, newStatus === "accepted" ? "success" : "error");
+            render();
+        }
+
+        function updateProjectStatus(i, status) {
+            requests[i].projectStatus = status;
+            if (status === "Completed") {
+                let msg = prompt("Provide closing remarks or completion notes:");
+                requests[i].completedMessage = msg && msg.trim() !== "" ? msg : "Project milestones achieved successfully.";
+                
+                completedProjects.push({
+                    project: requests[i].project, student: requests[i].to,
+                    message: requests[i].completedMessage, completedDate: new Date().toLocaleDateString()
+                });
+                projects = projects.filter(p => p.title !== requests[i].project);
+                localStorage.setItem("projects", JSON.stringify(projects));
+                localStorage.setItem("completedProjects", JSON.stringify(completedProjects));
+            } else {
+                requests[i].completedMessage = "";
+            }
+            localStorage.setItem("requests", JSON.stringify(requests));
+            toast("Status matrix updated.", "success");
+            render();
+        }
+
+        /* EXPORT CSV */
+        function exportCSV() {
+            if(completedProjects.length === 0) {
+                toast("No completed projects to export.", "warning"); return;
+            }
+            let csvContent = "data:text/csv;charset=utf-8,Project Title,Student Assigned,Completion Date,Notes\n";
+            completedProjects.forEach(row => {
+                let r = `"${row.project}","${row.student}","${row.completedDate}","${row.message}"`;
+                csvContent += r + "\n";
+            });
+            var encodedUri = encodeURI(csvContent);
+            var link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "CollabSphere_History.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast("CSV Download Triggered", "success");
+        }
+
+        /* RENDER DOM */
+        function render() {
+            // Render Students - using the original index `i` mapped correctly
+            let sKeyword = document.getElementById("searchStudent")?.value?.toLowerCase() || "";
+            let sListDOM = document.getElementById("slist");
+            
+            sListDOM.innerHTML = students.map((s, i) => ({ s, i }))
+                .filter(item => item.s.name.toLowerCase().includes(sKeyword))
+                .map(({ s, i }) =>
+                `<div class="col-md-6 col-lg-4">
+                    <div class="card-box text-center">
+                        <img src="https://ui-avatars.com/api/?name=${s.name}&background=random&color=fff" class="avatar mb-3">
+                        <h5 class="font-weight-bold">${s.name}</h5>
+                        <p class="text-muted small mb-2"><i class="fa-solid fa-building"></i> ${s.dept}</p>
+                        <span class="badge-custom bg-info mb-3 d-inline-block">${s.skill}</span>
+                        <div class="d-flex justify-content-center gap-2 mt-2">
+                            <button class="btn btn-success btn-sm mx-1" onclick="sendRequest('${s.name}')" title="Assign Project"><i class="fa-solid fa-paper-plane"></i></button>
+                            ${role === "admin" ? `
+                            <button class="btn btn-outline-primary btn-sm mx-1" onclick="openStudentModal(${i})" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn btn-outline-danger btn-sm mx-1" onclick="delStudent(${i})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                            ` : ""}
+                        </div>
+                    </div>
+                </div>`
+            ).join("");
+
+            // Render Projects - mapping original global indexes
+            let pKeyword = document.getElementById("searchProject")?.value?.toLowerCase() || "";
+            let pListDOM = document.getElementById("plist");
+            
+            pListDOM.innerHTML = projects.map((p, i) => ({ p, i }))
+                .filter(item => item.p.title.toLowerCase().includes(pKeyword))
+                .map(({ p, i }) =>
+                `<div class="col-md-6">
+                    <div class="card-box">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h5 class="text-primary font-weight-bold">${p.title}</h5>
+                            <div class="d-flex align-items-center">
+                                ${p.status === "Completed" 
+                                    ? `<span class="badge badge-success px-2 py-1 mr-2"><i class="fa-solid fa-check"></i> Done</span>` 
+                                    : `<span class="badge badge-warning px-2 py-1 mr-2 text-dark"><i class="fa-solid fa-spinner"></i> Pending</span>`}
+                                ${role === "admin" ? `<button class="btn btn-sm btn-light border text-muted" onclick="openProjectModal(${i})"><i class="fa-solid fa-pen"></i></button>` : ""}
+                            </div>
+                        </div>
+                        <p class="text-muted mt-2">${p.desc}</p>
+                        <div class="mb-3">
+                            <small class="text-muted d-block mb-1">Required Skills:</small>
+                            <span class="badge-custom">${p.skill}</span>
+                        </div>
+                        ${role === "admin" ? `
+                        <div class="border-top pt-3 mt-3">
+                            <small class="font-weight-bold d-block mb-2">Override Status:</small>
+                            <select class="form-control form-control-sm" onchange="changeProjectAvailability(${i},this.value)">
+                                <option value="Pending" ${p.status === "Pending" ? "selected" : ""}>Pending</option>
+                                <option value="Completed" ${p.status === "Completed" ? "selected" : ""}>Completed</option>
+                            </select>
+                        </div>` : ""}
+                    </div>
+                </div>`
+            ).join("");
+
+            // Render Requests - mapping original global indexes
+            let rListDOM = document.getElementById("rlist");
+            let visibleRequests = requests.map((r, i) => ({ r, i })).filter(item => item.r.to === user || role === "admin");
+            
+            if(visibleRequests.length === 0) {
+                rListDOM.innerHTML = `<div class="col-12"><p class="text-muted"><i class="fa-solid fa-inbox"></i> No pending requests found.</p></div>`;
+            } else {
+                rListDOM.innerHTML = visibleRequests.map(({ r, i }) =>
+                `<div class="col-md-6">
+                    <div class="card-box border-left ${r.status==='accepted'?'border-success':r.status==='rejected'?'border-danger':'border-warning'}" style="border-left-width: 4px !important;">
+                        <div class="d-flex justify-content-between mb-2">
+                            <small class="text-muted">From: <b>${r.from}</b> &rarr; To: <b>${r.to}</b></small>
+                            ${r.status === "accepted" ? `<span class="badge badge-success">Accepted</span>` : r.status === "rejected" ? `<span class="badge badge-danger">Rejected</span>` : `<span class="badge badge-warning text-dark">Pending Auth</span>`}
+                        </div>
+                        <h6 class="font-weight-bold text-dark"><i class="fa-solid fa-file-signature text-primary"></i> ${r.project}</h6>
+                        <div class="bg-light p-2 rounded mt-2 text-dark small border">"${r.message}"</div>
+                        
+                        <div class="mt-3">
+                            <small class="text-muted">Workflow Status:</small> 
+                            ${r.projectStatus === "Completed" ? `<span class="badge badge-success ml-1">Completed</span>` : r.projectStatus === "In Process" ? `<span class="badge badge-primary ml-1">In Process</span>` : `<span class="badge badge-secondary ml-1">Started</span>`}
+                        </div>
+
+                        ${role === "admin" && r.status === "accepted" ? `
+                        <div class="mt-3 bg-light p-2 rounded border">
+                            <small class="font-weight-bold d-block mb-1">Update Workflow:</small>
+                            <select class="form-control form-control-sm" onchange="updateProjectStatus(${i},this.value)">
+                                <option ${r.projectStatus === "Started" ? "selected" : ""}>Started</option>
+                                <option ${r.projectStatus === "In Process" ? "selected" : ""}>In Process</option>
+                                <option ${r.projectStatus === "Completed" ? "selected" : ""}>Completed</option>
+                            </select>
+                        </div>` : ""}
+
+                        ${r.projectStatus === "Completed" && r.completedMessage ? `
+                        <div class="alert alert-success mt-3 py-2 px-3 mb-0 small">
+                            <b><i class="fa-solid fa-flag-checkered"></i> Closing Note:</b> ${r.completedMessage}
+                        </div>` : ""}
+
+                        ${r.to === user && r.status === "pending" ? `
+                        <div class="mt-3 d-flex gap-2">
+                            <button class="btn btn-success btn-sm w-50 mx-1" onclick="accept(${i})"><i class="fa-solid fa-check"></i> Accept</button>
+                            <button class="btn btn-danger btn-sm w-50 mx-1" onclick="reject(${i})"><i class="fa-solid fa-xmark"></i> Decline</button>
+                        </div>` : ""}
+                    </div>
+                </div>`
+                ).join("");
+            }
+
+            // Render Kanban
+            let activeReqs = requests.filter(r => r.status === "accepted");
+            const createKanbanCard = (r) => `
+                <div class="card-box p-3 mb-3 border-0 shadow-sm">
+                    <h6 class="font-weight-bold m-0 text-primary">${r.project}</h6>
+                    <small class="text-muted d-block mt-1"><i class="fa-solid fa-user-astronaut"></i> ${r.to}</small>
+                </div>
+            `;
+            document.getElementById("kb-started").innerHTML = activeReqs.filter(r => r.projectStatus === "Started").map(createKanbanCard).join("") || '<small class="text-muted text-center d-block">Empty</small>';
+            document.getElementById("kb-process").innerHTML = activeReqs.filter(r => r.projectStatus === "In Process").map(createKanbanCard).join("") || '<small class="text-muted text-center d-block">Empty</small>';
+            document.getElementById("kb-completed").innerHTML = activeReqs.filter(r => r.projectStatus === "Completed").map(createKanbanCard).join("") || '<small class="text-muted text-center d-block">Empty</small>';
+
+            // Stats
+            document.getElementById("c1").innerText = students.length;
+            document.getElementById("c2").innerText = projects.length;
+            document.getElementById("c3").innerText = requests.length;
+
+            // Render History
+            let historyListDOM = document.getElementById("historyList");
+            if(completedProjects.length === 0) historyListDOM.innerHTML = `<div class="col-12"><p class="text-muted">No completed projects archived yet.</p></div>`;
+            else historyListDOM.innerHTML = completedProjects.map(h =>
+                `<div class="col-md-6 col-lg-4">
+                    <div class="card-box border-success" style="border-top: 4px solid #10b981;">
+                        <h5 class="text-success font-weight-bold"><i class="fa-solid fa-trophy mr-2"></i>${h.project}</h5>
+                        <p class="mb-1"><small class="text-muted">Assignee:</small> <b>${h.student}</b></p>
+                        <p class="small text-dark bg-light p-2 rounded mt-2 border">" ${h.message} "</p>
+                        <div class="text-right mt-3">
+                            <span class="badge badge-light border text-muted"><i class="fa-solid fa-calendar-check"></i> ${h.completedDate}</span>
+                        </div>
+                    </div>
+                </div>`
+            ).join("");
+
+            renderCharts();
+        }
+
+        /* CHARTS */
+        function renderCharts() {
+            let isDark = document.body.classList.contains('dark');
+            let textColor = isDark ? '#f1f5f9' : '#334155';
+            let gridColor = isDark ? '#334155' : '#e2e8f0';
+
+            Chart.defaults.color = textColor;
+
+            // Bar Chart
+            if (barChartObj) barChartObj.destroy();
+            barChartObj = new Chart(document.getElementById("barChart"), {
+                type: "bar",
+                data: {
+                    labels: ["Students", "Active Projects", "Total Requests", "Completed"],
+                    datasets: [{
+                        label: "System Metrics",
+                        data: [students.length, projects.length, requests.length, completedProjects.length],
+                        backgroundColor: ["#0ea5e9", "#4f46e5", "#f59e0b", "#10b981"],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true, grid: { color: gridColor } }, x: { grid: { display: false } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Doughnut Chart
+            if (donutChartObj) donutChartObj.destroy();
+            let activeReqsCount = requests.filter(r => r.projectStatus !== 'Completed').length;
+            let compReqsCount = completedProjects.length;
+
+            donutChartObj = new Chart(document.getElementById("doughnutChart"), {
+                type: "doughnut",
+                data: {
+                    labels: ["In Progress/Pending", "Completed"],
+                    datasets: [{
+                        data: [activeReqsCount + projects.length, compReqsCount],
+                        backgroundColor: ["#f43f5e", "#10b981"],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, cutout: '70%', plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+    </script>
+</body>
+</html>
